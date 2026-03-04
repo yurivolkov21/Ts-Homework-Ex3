@@ -28,4 +28,26 @@ export class UserDatabase {
   }
 
   // Thêm InsertMany
+  async insertMany(docs: UserDoc[]): Promise<UserEntity[]> {
+    if (docs.length === 0) return [];
+    const res = await this.col().insertMany(docs);
+    return docs.map((doc, i) => ({ ...doc, _id: res.insertedIds[i]! }));
+  }
+
+  async updateById(
+    id: string,
+    update: Partial<Pick<UserDoc, "email" | "passwordHash" | "role">>
+  ): Promise<UserEntity | null> {
+    const result = await this.col().findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: { ...update, updatedAt: new Date() } },
+      { returnDocument: "after" }
+    );
+    return result as UserEntity | null;
+  }
+
+  async deleteById(id: string): Promise<boolean> {
+    const result = await this.col().deleteOne({ _id: new ObjectId(id) });
+    return result.deletedCount === 1;
+  }
 }
